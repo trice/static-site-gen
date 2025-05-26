@@ -18,13 +18,9 @@ class LeafNode(HTMLNode):
             return self.value
         else:
             match (self.tag):
-                case "a":
+                case "a" | "abbr":
                     return self.__tag_helper(self.tag, self.value, self.props_to_html())
-                case "p":
+                case "p" | "b" | "i" | "span":
                     return self.__tag_helper(self.tag, self.value, None)
-                case "b":
-                    return self.__tag_helper(self.tag, self.value, None)
-                case "abbr":
-                    return self.__tag_helper(self.tag, self.value, self.props_to_html())
                 case _:
                     raise ValueError(f"unknow or unimplemented tag: {self.tag}")

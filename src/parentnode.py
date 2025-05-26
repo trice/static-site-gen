@@ -9,6 +9,9 @@ class ParentNode(HTMLNode):
     def __child_reducer(self, children):
         return reduce(lambda a, b: a + b, map(lambda x: x.to_html(), children))
 
+    def __tag_helper(self, tag, children):
+        return f"<{tag}>{self.__child_reducer(children)}</{tag}>"
+
     def to_html(self):
         if not self.tag:
             raise ValueError("tag is a required parameter")
@@ -16,5 +19,6 @@ class ParentNode(HTMLNode):
             raise ValueError("children is a required parameter")
         else:
             match(self.tag):
-                case "p":
-                    return f"<p>{self.__child_reducer(self.children)}</p>"
+                case "p" | "div" | "span":
+                    return self.__tag_helper(self.tag, self.children)
+
