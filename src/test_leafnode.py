@@ -28,3 +28,6 @@ class TestLeafNode(unittest.TestCase):
     def test_leaf_to_html_abbr(self):
         node = LeafNode("abbr", "USSR", props={"title":"Union of Soviet Socialists Republic"})
         self.assertEqual(node.to_html(), "<abbr title=\"Union of Soviet Socialists Republic\">USSR</abbr>")
+
+if __name__ == "__main__":
+    unittest.main()
