@@ -17,7 +17,7 @@ class HTMLNode:
         if self.props:
             return reduce(lambda paccum, pcurr: paccum + " " + pcurr, list(map(self.join_props, self.props.items()))) 
         else:
-            return None
+            return ""
 
     def __repr__(self):
         return f"HTMLNode({self.tag}, {self.value}, {self.children}, {self.props_to_html()})"

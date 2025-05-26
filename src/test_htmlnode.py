@@ -4,11 +4,11 @@ from htmlnode import HTMLNode
 class TestHTMLNode(unittest.TestCase):
     def test_None(self):
         html_node = HTMLNode();
-        self.assertEqual(repr(html_node), "HTMLNode(None, None, None, None)")
+        self.assertEqual(repr(html_node), "HTMLNode(None, None, None, )")
 
     def test_no_props_no_children(self):
         html_node = HTMLNode("h1", "I am the egg man", None, None)
-        self.assertEqual(repr(html_node), "HTMLNode(h1, I am the egg man, None, None)")
+        self.assertEqual(repr(html_node), "HTMLNode(h1, I am the egg man, None, )")
 
     def test_to_html_raises_exception(self):
         html_node = HTMLNode()
