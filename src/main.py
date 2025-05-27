@@ -1,6 +1,21 @@
+import re
 from textnode import TextType, TextNode
 from leafnode import LeafNode
 
+def __internal_extract_images_or_links(text, regex):
+    """
+    Use the regex to extract images or links from the text.
+    :param text: The text to extract images or links from
+    :param regex: The regex to use to extract images or links
+    :return: returns a list of tuples containing alt text and url
+    """
+    return re.findall(regex, text)
+    
+def extract_markdown_images(text):
+    return __internal_extract_images_or_links(text, r"!\[([^\]]*)\]\(([^)]*)\)")
+
+def extract_markdown_links(text):
+    return __internal_extract_images_or_links(text, r"\[([^\]]*)\]\(([^)]*)\)")
 
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
     """Split text nodes based on the specified delimiter and convert them to appropriate text types.
