@@ -41,6 +41,10 @@ def split_nodes_image(old_nodes):
     """
     new_nodes = []
     for old_node in old_nodes:
+        if old_node.text_type != TextType.TEXT:
+            new_nodes.append(old_node)
+            continue
+            
         new_text, _ = re.subn(r"(!\[[^]]*]\([^)]*\))", "-*-"+r"\1"+"-*-", old_node.text)
         split_text = new_text.split("-*-")
         for index in range(len(split_text)):
@@ -69,6 +73,10 @@ def split_nodes_link(old_nodes):
     """
     new_nodes = []
     for old_node in old_nodes:
+        if old_node.text_type != TextType.TEXT:
+            new_nodes.append(old_node)
+            continue
+            
         new_text, _ = re.subn(r"(\[[^]]*]\([^)]*\))", "-*-"+r"\1"+"-*-", old_node.text)
         split_text = new_text.split("-*-")
         for index in range(len(split_text)):
@@ -159,6 +167,14 @@ def text_node_to_html_node(text_node):
     else:
         raise Exception("unknown text type")
 
+def text_to_text_nodes(text):
+    # split text by code, bold, and italic
+    code_nodes = split_nodes_delimiter([TextNode(text, TextType.TEXT)], "`", TextType.CODE)
+    bold_nodes = split_nodes_delimiter(code_nodes, "**", TextType.BOLD)
+    italic_nodes = split_nodes_delimiter(bold_nodes, "_", TextType.ITALIC)
+    image_nodes = split_nodes_image(italic_nodes)
+    link_nodes = split_nodes_link(image_nodes)
+    return link_nodes
 
 def main():
     text_node = TextNode("This is some anchor text", TextType.LINK, "https://www.boot.dev")
