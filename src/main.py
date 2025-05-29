@@ -176,6 +176,18 @@ def text_to_text_nodes(text):
     link_nodes = split_nodes_link(image_nodes)
     return link_nodes
 
+def markdown_to_blocks(markdown):
+    # split the markdown into blocks based on \n\n
+    blocks = markdown.split("\n\n")
+    # process each block
+    processed_blocks = []
+    for block in blocks:
+        # split the block into lines
+        processed_blocks.append(block.strip())
+    
+    return processed_blocks
+
+
 def main():
     text_node = TextNode("This is some anchor text", TextType.LINK, "https://www.boot.dev")
     print(text_node)
