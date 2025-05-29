@@ -3,6 +3,16 @@ import re
 from leafnode import LeafNode
 from textnode import TextType, TextNode
 
+from enum import Enum
+
+class BlockType(Enum):
+    PARAGRAPH = "paragraph"
+    HEADING = "heading"
+    CODE = "code"
+    QUOTE = "quote"
+    UNORDERED_LIST = "unordered_list"
+    ORDERED_LIST = "ordered_list"
+
 
 def __internal_extract_images_or_links(text, regex):
     """
@@ -183,9 +193,27 @@ def markdown_to_blocks(markdown):
     processed_blocks = []
     for block in blocks:
         # split the block into lines
-        processed_blocks.append(block.strip())
+        if "" != block.strip():
+            processed_blocks.append(block.strip())
     
     return processed_blocks
+
+def block_to_block_type(block):
+    if re.match(r"^#{1,6}", block):
+        return BlockType.HEADING
+    elif block.count("```") == 2:
+        return BlockType.CODE
+    elif re.match(r"^>.*", block):
+        return BlockType.QUOTE
+    elif re.match(r"^[*+-] ", block):
+        return BlockType.UNORDERED_LIST
+    elif re.match(r"^\d+\.\s", block):
+        return BlockType.ORDERED_LIST
+    else:
+        return BlockType.PARAGRAPH
+
+def markdown_to_html_node(markdown):
+    pass
 
 
 def main():
