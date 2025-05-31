@@ -19,6 +19,7 @@ class ParentNode(HTMLNode):
             raise ValueError("children is a required parameter")
         else:
             match(self.tag):
-                case "p" | "div" | "span":
+                case "p" | "div" | "span" | "pre":
                     return self.__tag_helper(self.tag, self.children)
+            return None
 

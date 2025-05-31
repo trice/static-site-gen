@@ -2,13 +2,14 @@ import re
 
 from leafnode import LeafNode
 from textnode import TextType, TextNode
-
+from parentnode import ParentNode
 from enum import Enum
 
 class BlockType(Enum):
     PARAGRAPH = "paragraph"
     HEADING = "heading"
     CODE = "code"
+    CODE_BLOCK = "code_block"
     QUOTE = "quote"
     UNORDERED_LIST = "unordered_list"
     ORDERED_LIST = "ordered_list"
@@ -147,6 +148,23 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
     return new_nodes
 
 
+def heading_text_to_heading_leafnode(text_node):
+    # Count the #s then make a leafnode by splitting off the #s
+    heading_level = text_node.text.count("#")
+    if heading_level > 6:
+        raise Exception("heading level must be <= 6")
+    heading_text = text_node.text.replace("#" * heading_level, "").strip()
+    return LeafNode("h" + str(heading_level), heading_text)
+
+
+def code_block_to_code_parent_node(text_node):
+    split_text = text_node.text.split("```")
+    if len(split_text) != 3:
+        raise Exception("code block must have 3 backticks")
+    nodes = [LeafNode("code", split_text[1].strip())]
+    return ParentNode("pre", nodes)
+
+
 def text_node_to_html_node(text_node):
     """
     Converts a `text_node` object into an appropriate HTML node representation based on 
@@ -170,21 +188,35 @@ def text_node_to_html_node(text_node):
         return LeafNode("i", text_node.text)
     elif text_node.text_type == TextType.CODE:
         return LeafNode("code", text_node.text)
+    elif text_node.text_type == TextType.CODE_BLOCK:
+        return code_block_to_code_parent_node(text_node)
     elif text_node.text_type == TextType.LINK:
         return LeafNode("a", text_node.text, props={"href": text_node.url})
     elif text_node.text_type == TextType.IMAGE:
         return LeafNode("img", text_node.text, props={"src": text_node.url})
+    elif text_node.text_type == TextType.HEADING:
+        # This needs to call a method to build a heading tag based on the number of #s in the text
+        return heading_text_to_heading_leafnode(text_node)
+    elif text_node.text_type == TextType.QUOTE:
+        return LeafNode("q", text_node.text)
+    elif text_node.text_type == TextType.UNORDERED_LIST:
+        # I think this gets complicated because we need to use a li tag for unordered lists
+        return LeafNode("ul", text_node.text)
+    elif text_node.text_type == TextType.ORDERED_LIST:
+        # I think this gets complicated because we need to use a li tag for ordered lists
+        return LeafNode("ol", text_node.text)
     else:
         raise Exception("unknown text type")
 
 def text_to_text_nodes(text):
     # split text by code, bold, and italic
-    code_nodes = split_nodes_delimiter([TextNode(text, TextType.TEXT)], "`", TextType.CODE)
-    bold_nodes = split_nodes_delimiter(code_nodes, "**", TextType.BOLD)
-    italic_nodes = split_nodes_delimiter(bold_nodes, "_", TextType.ITALIC)
-    image_nodes = split_nodes_image(italic_nodes)
-    link_nodes = split_nodes_link(image_nodes)
-    return link_nodes
+    nodes = [TextNode(text, TextType.TEXT)]
+    nodes = split_nodes_delimiter(nodes, "`", TextType.CODE)
+    nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD)
+    nodes = split_nodes_delimiter(nodes, "_", TextType.ITALIC)
+    nodes = split_nodes_image(nodes)
+    nodes = split_nodes_link(nodes)
+    return nodes
 
 def markdown_to_blocks(markdown):
     # split the markdown into blocks based on \n\n
@@ -193,16 +225,20 @@ def markdown_to_blocks(markdown):
     processed_blocks = []
     for block in blocks:
         # split the block into lines
-        if "" != block.strip():
-            processed_blocks.append(block.strip())
+        if block == "":
+            continue
+        block = block.strip()
+        processed_blocks.append(block)
     
     return processed_blocks
 
 def block_to_block_type(block):
     if re.match(r"^#{1,6}", block):
         return BlockType.HEADING
-    elif block.count("```") == 2:
+    elif re.match(r"^`.+`$", block):
         return BlockType.CODE
+    elif block.count("```") == 2:
+        return BlockType.CODE_BLOCK
     elif re.match(r"^>.*", block):
         return BlockType.QUOTE
     elif re.match(r"^[*+-] ", block):
@@ -212,8 +248,53 @@ def block_to_block_type(block):
     else:
         return BlockType.PARAGRAPH
 
+
+def text_code_block_to_text_node(block):
+    return TextNode(block, TextType.CODE_BLOCK)
+
+
+def build_paragraph_children(block):
+    paragraph_nodes = text_to_text_nodes(block)
+    child_nodes = []
+    for paragraph_node in paragraph_nodes:
+        # I guess this is necessary because of how we split the text from the Markdown into paragraphs.
+        paragraph_node.text = paragraph_node.text.replace("\n", " ")
+        child_nodes.append(text_node_to_html_node(paragraph_node))
+    return child_nodes
+
+
 def markdown_to_html_node(markdown):
-    pass
+    # make markdown to blocks and then blocks to types and finally block types to HTML leaf nodes
+    md_blocks = markdown_to_blocks(markdown)
+    html_nodes = []
+    for index in range(len(md_blocks)):
+        block = md_blocks[index]
+        block_type = block_to_block_type(block)
+        if block_type == BlockType.HEADING:
+            heading_node = text_to_text_nodes(block)[0]
+            heading_node.text_type = TextType.HEADING
+            html_nodes.append(text_node_to_html_node(heading_node))
+        elif block_type == BlockType.CODE:
+            code_node = text_to_text_nodes(block)[0]
+            code_node.text_type = TextType.CODE
+            html_nodes.append(text_node_to_html_node(code_node))
+        elif block_type == BlockType.CODE_BLOCK:
+            code_block_node = text_code_block_to_text_node(block)
+            code_block_node.text_type = TextType.CODE
+            html_nodes.append(code_block_to_code_parent_node(code_block_node))
+        elif block_type == BlockType.QUOTE:
+            quote_node = text_to_text_nodes(block)[0]
+            quote_node.text_type = TextType.QUOTE
+            html_nodes.append(text_node_to_html_node(quote_node))
+        elif block_type == BlockType.UNORDERED_LIST:
+            unordered_list_node = text_to_text_nodes(block)[0]
+        elif block_type == BlockType.PARAGRAPH:
+            child_nodes = build_paragraph_children(block)
+            html_nodes.append(ParentNode("p", child_nodes))            
+            
+    parent_node = ParentNode("div", html_nodes)
+    return parent_node
+
 
 
 def main():

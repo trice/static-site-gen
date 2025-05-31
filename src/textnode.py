@@ -5,8 +5,14 @@ class TextType(Enum):
     BOLD = "bold"
     ITALIC = "italic"
     CODE = "code"
+    CODE_BLOCK = "code_block"
     LINK = "link"
     IMAGE = "image"
+    HEADING = "heading"
+    QUOTE = "quote"
+    UNORDERED_LIST = "unordered_list"
+    ORDERED_LIST = "ordered_list"
+    
 
 class TextNode:
     def __init__(self, text, text_type, url=None):

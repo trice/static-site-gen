@@ -3,7 +3,7 @@ from unittest import TestCase
 
 from main import text_node_to_html_node, split_nodes_delimiter, extract_markdown_links, extract_markdown_images, \
     TextNode, TextType, split_nodes_image, split_nodes_link, text_to_text_nodes, markdown_to_blocks, \
-    block_to_block_type, BlockType
+    block_to_block_type, BlockType, heading_text_to_heading_leafnode, markdown_to_html_node
 
 
 class TestMainTextNodeToHtmlNode(unittest.TestCase):
@@ -244,7 +244,6 @@ This is the same paragraph on a new line
 
 ###### heading 6
 
-
 """
         blocks = markdown_to_blocks(md) 
         
@@ -271,7 +270,111 @@ This is the same paragraph on a new line
                 BlockType.HEADING
             ],
         )
+    
+    def test_text_node_to_heading1_leaf_node(self):
+        node = TextNode("# This is a heading", TextType.HEADING)
+        html_node = heading_text_to_heading_leafnode(node)
+        self.assertEqual(html_node.tag, "h1")
+        self.assertEqual(html_node.value, "This is a heading")
+    
+    def test_text_node_to_heading2_leaf_node(self):
+        node = TextNode("## This is a heading", TextType.HEADING)
+        html_node = heading_text_to_heading_leafnode(node)
+        self.assertEqual(html_node.tag, "h2")
+        self.assertEqual(html_node.value, "This is a heading")
         
+    def test_text_node_to_heading3_leaf_node(self):
+        node = TextNode("### This is a heading", TextType.HEADING)
+        html_node = heading_text_to_heading_leafnode(node)
+        self.assertEqual(html_node.tag, "h3")
+        self.assertEqual(html_node.value, "This is a heading")
+        
+    def test_text_node_to_heading4_leaf_node(self):
+        node = TextNode("#### This is a heading", TextType.HEADING)
+        html_node = heading_text_to_heading_leafnode(node)
+        self.assertEqual(html_node.tag, "h4")
+        self.assertEqual(html_node.value, "This is a heading")
+        
+    def test_text_node_to_heading5_leaf_node(self):
+        node = TextNode("##### This is a heading", TextType.HEADING)
+        html_node = heading_text_to_heading_leafnode(node)
+        self.assertEqual(html_node.tag, "h5")
+        self.assertEqual(html_node.value, "This is a heading")
+        
+    def test_text_node_to_heading6_leaf_node(self):
+        node = TextNode("###### This is a heading", TextType.HEADING)
+        html_node = heading_text_to_heading_leafnode(node)
+        self.assertEqual(html_node.tag, "h6")
+        self.assertEqual(html_node.value, "This is a heading")
+        
+    def test_text_node_to_heading7_leaf_node(self):
+        node = TextNode("####### This is a heading", TextType.HEADING)
+        with self.assertRaises(Exception):
+            heading_text_to_heading_leafnode(node)
+            
+    def test_markdown_nodes_to_html_nodes_expecting_heading1(self):
+        md = """
+# heading 1
+        """
+        leaf_nodes = markdown_to_html_node(md)
+        html = leaf_nodes.to_html()
+        self.assertEqual(html, "<div><h1>heading 1</h1></div>")
+        
+    def test_markdown_nodes_to_html_nodes_expecting_code(self):
+        md = """
+```
+print("Hello, world!")
+print("this is a code block")        
+```
+        """
+        leaf_node = markdown_to_html_node(md)
+        html = leaf_node.to_html()
+        self.assertEqual(html, "<div><pre><code>print(\"Hello, world!\")\nprint(\"this is a code block\")</code></pre></div>")
+
+
+    def test_paragraphs(self):
+        md = """
+This is **bolded** paragraph
+text in a p
+tag here
+
+This is another paragraph with _italic_ text and `code` here
+    """
+    
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><p>This is <b>bolded</b> paragraph text in a p tag here</p><p>This is another paragraph with <i>italic</i> text and <code>code</code> here</p></div>",
+        )
+    
+    def test_codeblock(self):
+        md = """
+```
+This is text that _should_ remain
+the **same** even with inline stuff
+```
+    """
+    
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><pre><code>This is text that _should_ remain\nthe **same** even with inline stuff</code></pre></div>",
+        )
+        
+#     def test_block_quote(self):
+#         md = """
+# > The quarterly results look great!
+# >
+# > Revenue was off the chart.
+# > Profits were higher than ever.
+# >
+# > _Everything_ is going according to **plan**.
+#         """
+#         node = markdown_to_html_node(md)
+#         html = node.to_html()
+#         self.assertEqual(html, "<div><blockquote><p>The quarterly results look great!</p><p></p><p>Revenue was off the chart.</p><p>Profits were higher than ever.</p><p></p><p><i>Everything</i> is going according to <b>plan</b>.</p></blockquote></div>")
 
 if __name__ == "__main__":
     unittest.main()
