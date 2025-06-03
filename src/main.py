@@ -406,23 +406,23 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, bas
 
 
 def main():
-    base_path = "./"
+    base_path = "/"
 
     if len(sys.argv) != 2:
-        base_path = "./"
+        base_path = "/"
     
     base_path = sys.argv[1]
-
-    src_dir = os.path.join(base_path, "static")
-    dst_dir = os.path.join(base_path, "docs")
+    work_dir = os.getcwd()
+    src_dir = os.path.join(work_dir, "static")
+    dst_dir = os.path.join(work_dir, "docs")
     shutil.rmtree(dst_dir, ignore_errors=True)
     copy_static_to_public(src_dir, dst_dir)
     
-    src_dir = os.path.join(base_path, "content")
-    dst_dir = os.path.join(base_path, "docs")
+    src_dir = os.path.join(work_dir, "content")
+    dst_dir = os.path.join(work_dir, "docs")
     copy_static_to_public(src_dir, dst_dir, True)
 
-    generate_pages_recursive(src_dir, os.path.join(base_path, "template.html"), dst_dir, base_path)
+    generate_pages_recursive(src_dir, os.path.join(work_dir, "template.html"), dst_dir, base_path)
 
 if __name__ == "__main__":
     main()
