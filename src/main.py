@@ -1,6 +1,4 @@
 import re
-import shutil
-import os
 
 from leafnode import LeafNode
 from textnode import TextType, TextNode
@@ -338,26 +336,10 @@ def markdown_to_html_node(markdown):
     return parent_node
 
 
-def copy_static_to_public(src_dir, dst_dir):
-    if not os.path.exists(dst_dir):
-        os.mkdir(dst_dir)
-        
-    src_stuff = os.listdir(src_dir)
-    for src_file in src_stuff:
-        src_file_path = os.path.join(src_dir, src_file)
-        if os.path.isdir(src_file_path):
-            copy_static_to_public(src_file_path, os.path.join(dst_dir, src_file))
-        else:
-            shutil.copy(src_file_path, dst_dir)
-        
-            
-            
 
 def main():
-    work_dir = os.getcwd()
-    src_dir = os.path.join(work_dir, "static")
-    dst_dir = os.path.join(work_dir, "public")
-    shutil.rmtree(dst_dir, ignore_errors=True)
-    copy_static_to_public(src_dir, dst_dir)
+    text_node = TextNode("This is some anchor text", TextType.LINK, "https://www.boot.dev")
+    print(text_node)
+
 
 main()
