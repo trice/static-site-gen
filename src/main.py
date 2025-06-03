@@ -351,7 +351,7 @@ def markdown_to_html_node(markdown):
     return parent_node
 
 
-def copy_static_to_public(src_dir, dst_dir):
+def copy_static_to_public(src_dir, dst_dir, dirs_only=False):
     if not os.path.exists(dst_dir):
         os.mkdir(dst_dir)
         
@@ -359,11 +359,12 @@ def copy_static_to_public(src_dir, dst_dir):
     for src_file in src_stuff:
         src_file_path = os.path.join(src_dir, src_file)
         if os.path.isdir(src_file_path):
-            copy_static_to_public(src_file_path, os.path.join(dst_dir, src_file))
+            copy_static_to_public(src_file_path, os.path.join(dst_dir, src_file), dirs_only)
         else:
-            shutil.copy(src_file_path, dst_dir)
-        
+            if not dirs_only:
+                shutil.copy(src_file_path, dst_dir)
             
+
 def extract_title(markdown):
     lines = markdown.split("\n")
     for line in lines:
@@ -387,6 +388,29 @@ def generate_page(from_path, template_path, to_path):
     page = template.replace("{{ Title }}", title).replace("{{ Content }}", html_node.to_html())
     with open(to_path, "w") as to_file:
         to_file.write(page)
+        
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+    print(f"Crawling {dir_path_content} searching for Markdown files")
+    source_files = os.listdir(dir_path_content)
+    for source_file in source_files:
+        source_file_path = os.path.join(dir_path_content, source_file)
+        if os.path.isdir(source_file_path):
+            generate_pages_recursive(source_file_path, template_path, os.path.join(dest_dir_path, source_file))
+        else:
+            if source_file.endswith(".md"):
+                from_path = os.path.join(dir_path_content, source_file)
+                to_path = os.path.join(dest_dir_path, source_file[:-3] + ".html")
+                generate_page(from_path, template_path, to_path)
+                
+    # for dir_path, dir_names, file_names in os.walk(dir_path_content):
+    #     for file_name in file_names:
+    #         if file_name.endswith(".md"):
+    #             from_path = os.path.join(dir_path, file_name)
+    #             sub_directories = dir_path.split(os.sep)
+    #             to_path = os.path.join(dest_dir_path, file_name[:-3] + ".html")
+    #             print(from_path)
+    #             print(to_path)
+    #             #generate_page(from_path, template_path, to_path)
 
 def main():
     work_dir = os.getcwd()
@@ -394,7 +418,12 @@ def main():
     dst_dir = os.path.join(work_dir, "public")
     shutil.rmtree(dst_dir, ignore_errors=True)
     copy_static_to_public(src_dir, dst_dir)
-    generate_page(os.path.join(work_dir, "content", "index.md"), os.path.join(work_dir, "template.html"), os.path.join(dst_dir, "index.html"))
+    
+    src_dir = os.path.join(work_dir, "content")
+    dst_dir = os.path.join(work_dir, "public")
+    copy_static_to_public(src_dir, dst_dir, True)
+    
+    generate_pages_recursive(src_dir, os.path.join(work_dir, "template.html"), dst_dir)
 
 if __name__ == "__main__":
     main()
