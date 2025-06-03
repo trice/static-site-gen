@@ -1,6 +1,7 @@
 from enum import Enum
 
 class TextType(Enum):
+    PARAGRAPH = "paragraph"
     TEXT = "text"
     BOLD = "bold"
     ITALIC = "italic"
@@ -10,8 +11,9 @@ class TextType(Enum):
     IMAGE = "image"
     HEADING = "heading"
     QUOTE = "quote"
-    UNORDERED_LIST = "unordered_list"
+    UNORDERED_LIST = "unordered_list"   
     ORDERED_LIST = "ordered_list"
+    BLOCKQUOTE = "blockquote"
     
 
 class TextNode:

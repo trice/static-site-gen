@@ -13,6 +13,7 @@ class BlockType(Enum):
     QUOTE = "quote"
     UNORDERED_LIST = "unordered_list"
     ORDERED_LIST = "ordered_list"
+    BLOCKQUOTE = "blockquote"
 
 
 def __internal_extract_images_or_links(text, regex):
@@ -205,6 +206,10 @@ def text_node_to_html_node(text_node):
     elif text_node.text_type == TextType.ORDERED_LIST:
         # I think this gets complicated because we need to use a li tag for ordered lists
         return LeafNode("li", text_node.text)
+    elif text_node.text_type == TextType.BLOCKQUOTE:
+        return LeafNode("blockquote", text_node.text)
+    elif text_node.text_type == TextType.PARAGRAPH:
+        return LeafNode("p", text_node.text)
     else:
         raise Exception("unknown text type")
 
@@ -240,7 +245,7 @@ def block_to_block_type(block):
     elif block.count("```") == 2:
         return BlockType.CODE_BLOCK
     elif re.match(r"^>.*", block):
-        return BlockType.QUOTE
+        return BlockType.BLOCKQUOTE
     elif re.match(r"^[*+-] ", block):
         return BlockType.UNORDERED_LIST
     elif re.match(r"^\d+\.\s", block):
@@ -276,6 +281,21 @@ def build_list_node_children(block):
         html_nodes.append(text_node_to_html_node(text_node))
     return html_nodes
 
+def build_block_quote_children(block):
+    blocks = block.split("\n")
+    text_nodes_lists = list(map(lambda x: text_to_text_nodes(x), blocks))
+    
+    html_nodes = []
+    for inner_list in text_nodes_lists:
+        for text_node in inner_list:
+            if text_node.text_type == TextType.TEXT:
+                text_node.text_type = TextType.PARAGRAPH
+            text_node.text = re.sub(r"^>\s*", "", text_node.text)
+            html_nodes.append(text_node_to_html_node(text_node))
+        
+    return html_nodes
+        
+
 def markdown_to_html_node(markdown):
     # make Markdown to blocks and then blocks to types and finally block types to HTML leaf nodes
     md_blocks = markdown_to_blocks(markdown)
@@ -304,7 +324,10 @@ def markdown_to_html_node(markdown):
             html_nodes.append(ParentNode("ul", child_nodes))
         elif block_type == BlockType.ORDERED_LIST:
             child_nodes = build_list_node_children(block)
-            html_nodes.append(ParentNode("ol", child_nodes))       
+            html_nodes.append(ParentNode("ol", child_nodes))
+        elif block_type == BlockType.BLOCKQUOTE:
+            child_nodes = build_block_quote_children(block)
+            html_nodes.append(ParentNode("blockquote", child_nodes))       
         elif block_type == BlockType.PARAGRAPH:
             child_nodes = build_paragraph_children(block)
             html_nodes.append(ParentNode("p", child_nodes))            

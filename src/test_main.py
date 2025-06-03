@@ -392,18 +392,18 @@ the **same** even with inline stuff
         )
         
         
-#     def test_block_quote(self):
-#         md = """
-# > The quarterly results look great!
-# >
-# > Revenue was off the chart.
-# > Profits were higher than ever.
-# >
-# > _Everything_ is going according to **plan**.
-#         """
-#         node = markdown_to_html_node(md)
-#         html = node.to_html()
-#         self.assertEqual(html, "<div><blockquote><p>The quarterly results look great!</p><p></p><p>Revenue was off the chart.</p><p>Profits were higher than ever.</p><p></p><p><i>Everything</i> is going according to <b>plan</b>.</p></blockquote></div>")
+    def test_block_quote(self):
+        md = """
+> The quarterly results look great!
+>
+> Revenue was off the chart.
+> Profits were higher than ever.
+>
+> Everything is going according to plan.
+        """
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(html, "<div><blockquote><p>The quarterly results look great!</p><p></p><p>Revenue was off the chart.</p><p>Profits were higher than ever.</p><p></p><p>Everything is going according to plan.</p></blockquote></div>")
 
 if __name__ == "__main__":
     unittest.main()
