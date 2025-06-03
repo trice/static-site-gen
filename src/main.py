@@ -1,6 +1,8 @@
 import re
 import shutil
 import os
+import sys
+from multiprocessing.pool import worker
 
 from leafnode import LeafNode
 from textnode import TextType, TextNode
@@ -373,7 +375,7 @@ def extract_title(markdown):
         
     raise Exception("no title found")
 
-def generate_page(from_path, template_path, to_path):
+def generate_page(from_path, template_path, to_path, base_path):
     print(f"Generating page from {from_path} to {to_path} using {template_path}")
     
     with open(from_path, "r") as from_file:
@@ -385,36 +387,42 @@ def generate_page(from_path, template_path, to_path):
     with open(template_path, "r") as template_file:
         template = template_file.read()
         
-    page = template.replace("{{ Title }}", title).replace("{{ Content }}", html_node.to_html())
+    page = template.replace("{{ Title }}", title).replace("{{ Content }}", html_node.to_html()).replace("{{basepath}}", base_path)
     with open(to_path, "w") as to_file:
         to_file.write(page)
         
-def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, base_path):
     print(f"Crawling {dir_path_content} searching for Markdown files")
     source_files = os.listdir(dir_path_content)
     for source_file in source_files:
         source_file_path = os.path.join(dir_path_content, source_file)
         if os.path.isdir(source_file_path):
-            generate_pages_recursive(source_file_path, template_path, os.path.join(dest_dir_path, source_file))
+            generate_pages_recursive(source_file_path, template_path, os.path.join(dest_dir_path, source_file), base_path)
         else:
             if source_file.endswith(".md"):
                 from_path = os.path.join(dir_path_content, source_file)
                 to_path = os.path.join(dest_dir_path, source_file[:-3] + ".html")
-                generate_page(from_path, template_path, to_path)
+                generate_page(from_path, template_path, to_path, base_path)
 
 
 def main():
-    work_dir = os.getcwd()
-    src_dir = os.path.join(work_dir, "static")
-    dst_dir = os.path.join(work_dir, "public")
+    base_path = "./"
+
+    if len(sys.argv) != 2:
+        base_path = "./"
+    
+    base_path = sys.argv[1]
+
+    src_dir = os.path.join(base_path, "static")
+    dst_dir = os.path.join(base_path, "docs")
     shutil.rmtree(dst_dir, ignore_errors=True)
     copy_static_to_public(src_dir, dst_dir)
     
-    src_dir = os.path.join(work_dir, "content")
-    dst_dir = os.path.join(work_dir, "public")
+    src_dir = os.path.join(base_path, "content")
+    dst_dir = os.path.join(base_path, "docs")
     copy_static_to_public(src_dir, dst_dir, True)
-    
-    generate_pages_recursive(src_dir, os.path.join(work_dir, "template.html"), dst_dir)
+
+    generate_pages_recursive(src_dir, os.path.join(base_path, "template.html"), dst_dir, base_path)
 
 if __name__ == "__main__":
     main()
