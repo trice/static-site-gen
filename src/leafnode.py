@@ -22,7 +22,7 @@ class LeafNode(HTMLNode):
                     return self.__tag_helper(self.tag, self.value, self.props_to_html())
                 case "img":
                     return f"<img {self.props_to_html()}>"
-                case "p" | "b" | "i" | "span" | "code" | "q" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6":
+                case "p" | "b" | "i" | "span" | "code" | "q" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "li":
                     return self.__tag_helper(self.tag, self.value, None)
                 case _:
                     raise ValueError(f"unknow or unimplemented tag: {self.tag}")

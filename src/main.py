@@ -70,7 +70,7 @@ def split_nodes_image(old_nodes):
 
 def split_nodes_link(old_nodes):
     """
-    Splits the text of nodes containing Markdown links into separate nodes, while maintaining 
+    Splits the text of nodes containing Markdown links into separate nodes while maintaining 
     the structure of the original content. Each Markdown link in a text is isolated, and the 
     resulting split content is used to create a series of nodes, distinguished as plain text 
     or link types.
@@ -79,7 +79,7 @@ def split_nodes_link(old_nodes):
                       may or may not include Markdown links.
     :type old_nodes: list[TextNode]
     :return: A list of newly created nodes where Markdown links in the text have been 
-             split into individual link nodes, and other text is represented as text nodes.
+             split into individual link nodes, and the other text is represented as text nodes.
     :rtype: list[TextNode]
     """
     new_nodes = []
@@ -175,7 +175,7 @@ def text_node_to_html_node(text_node):
                       It must include attributes such as `text_type`, `text`, and for 
                       certain types, `url`.
 
-    :return: An instance of `LeafNode` representing the equivalent HTML node for the 
+    :return: An instance of `LeafNode` is representing the equivalent HTML node for the 
              provided `text_node` configuration.
 
     :raises Exception: If the `text_node` contains an unsupported or unknown `text_type`.
@@ -201,10 +201,10 @@ def text_node_to_html_node(text_node):
         return LeafNode("q", text_node.text)
     elif text_node.text_type == TextType.UNORDERED_LIST:
         # I think this gets complicated because we need to use a li tag for unordered lists
-        return LeafNode("ul", text_node.text)
+        return LeafNode("li", text_node.text)
     elif text_node.text_type == TextType.ORDERED_LIST:
         # I think this gets complicated because we need to use a li tag for ordered lists
-        return LeafNode("ol", text_node.text)
+        return LeafNode("li", text_node.text)
     else:
         raise Exception("unknown text type")
 
@@ -219,7 +219,7 @@ def text_to_text_nodes(text):
     return nodes
 
 def markdown_to_blocks(markdown):
-    # split the markdown into blocks based on \n\n
+    # split the Markdown into blocks based on \n\n
     blocks = markdown.split("\n\n")
     # process each block
     processed_blocks = []
@@ -263,8 +263,21 @@ def build_paragraph_children(block):
     return child_nodes
 
 
+def build_list_node_children(block):
+    blocks = block.split("\n")
+    text_nodes = list(map(lambda x: text_to_text_nodes(x)[0], blocks))
+    
+    html_nodes = []
+    for text_node in text_nodes:
+        text_node.text = re.sub(r"([*+-]|\d{1,3}\.)\s*", "", text_node.text)
+        if text_node.text_type == TextType.TEXT:
+            # This is not a bug. It doesn't matter which list type we use since it will be up to the container to decide.
+            text_node.text_type = TextType.UNORDERED_LIST
+        html_nodes.append(text_node_to_html_node(text_node))
+    return html_nodes
+
 def markdown_to_html_node(markdown):
-    # make markdown to blocks and then blocks to types and finally block types to HTML leaf nodes
+    # make Markdown to blocks and then blocks to types and finally block types to HTML leaf nodes
     md_blocks = markdown_to_blocks(markdown)
     html_nodes = []
     for index in range(len(md_blocks)):
@@ -287,7 +300,11 @@ def markdown_to_html_node(markdown):
             quote_node.text_type = TextType.QUOTE
             html_nodes.append(text_node_to_html_node(quote_node))
         elif block_type == BlockType.UNORDERED_LIST:
-            unordered_list_node = text_to_text_nodes(block)[0]
+            child_nodes = build_list_node_children(block)
+            html_nodes.append(ParentNode("ul", child_nodes))
+        elif block_type == BlockType.ORDERED_LIST:
+            child_nodes = build_list_node_children(block)
+            html_nodes.append(ParentNode("ol", child_nodes))       
         elif block_type == BlockType.PARAGRAPH:
             child_nodes = build_paragraph_children(block)
             html_nodes.append(ParentNode("p", child_nodes))            

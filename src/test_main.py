@@ -1,5 +1,4 @@
 import unittest
-from unittest import TestCase
 
 from main import text_node_to_html_node, split_nodes_delimiter, extract_markdown_links, extract_markdown_images, \
     TextNode, TextType, split_nodes_image, split_nodes_link, text_to_text_nodes, markdown_to_blocks, \
@@ -362,6 +361,36 @@ the **same** even with inline stuff
             html,
             "<div><pre><code>This is text that _should_ remain\nthe **same** even with inline stuff</code></pre></div>",
         )
+        
+    def test_unordered_list(self):
+        md = """
+- This is a list
+- with items
+- lot of items
+- more items than we've seen before        
+        """
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><ul><li>This is a list</li><li>with items</li><li>lot of items</li><li>more items than we've seen before</li></ul></div>",
+        )
+        
+        
+    def test_ordered_list(self):
+        md = """
+1. This is a numbered list
+2. with items
+3. more items than we've seen before       
+        """
+        
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><ol><li>This is a numbered list</li><li>with items</li><li>more items than we've seen before</li></ol></div>",
+        )
+        
         
 #     def test_block_quote(self):
 #         md = """
