@@ -272,30 +272,44 @@ def build_paragraph_children(block):
 
 def build_list_node_children(block):
     blocks = block.split("\n")
-    text_nodes = list(map(lambda x: text_to_text_nodes(x)[0], blocks))
+    html_nodes = []    
     
-    html_nodes = []
-    for text_node in text_nodes:
-        text_node.text = re.sub(r"([*+-]|\d{1,3}\.)\s*", "", text_node.text)
-        if text_node.text_type == TextType.TEXT:
-            # This is not a bug. It doesn't matter which list type we use since it will be up to the container to decide.
-            text_node.text_type = TextType.UNORDERED_LIST
-        html_nodes.append(text_node_to_html_node(text_node))
+    for block in blocks:
+        text_nodes = text_to_text_nodes(block)
+        children = []
+        for text_node in text_nodes:
+            text_node.text = re.sub(r"([*+-]|\d{1,3}\.)\s*", "", text_node.text)
+            children.append(text_node_to_html_node(text_node))
+        html_nodes.append(ParentNode("li", children))
+
     return html_nodes
 
 def build_block_quote_children(block):
     blocks = block.split("\n")
-    text_nodes_lists = list(map(lambda x: text_to_text_nodes(x), blocks))
-    
-    html_nodes = []
-    for inner_list in text_nodes_lists:
-        for text_node in inner_list:
-            if text_node.text_type == TextType.TEXT:
-                text_node.text_type = TextType.PARAGRAPH
-            text_node.text = re.sub(r"^>\s*", "", text_node.text)
-            html_nodes.append(text_node_to_html_node(text_node))
-        
-    return html_nodes
+    children = []
+    count = 0
+    for block in blocks:
+        text_nodes = text_to_text_nodes(block)
+        for text_node in text_nodes:
+            if count > 0 and text_node.text.startswith(">"):
+                text_node.text = re.sub(r"^>\s*", "", text_node.text).strip()
+                children.append(ParentNode("p", [text_node_to_html_node(text_node)]))
+            else:
+                text_node.text = re.sub(r"^>\s*", "", text_node.text).strip()
+                children.append(text_node_to_html_node(text_node))
+            count += 1
+            
+    return [ParentNode("blockquote", children)]
+
+    # html_nodes = []
+    # for inner_list in text_nodes_lists:
+    #     for text_node in inner_list:
+    #         if text_node.text_type == TextType.TEXT:
+    #             text_node.text_type = TextType.PARAGRAPH
+    #         text_node.text = re.sub(r"^>\s*", "", text_node.text)
+    #         html_nodes.append(text_node_to_html_node(text_node))
+    #     
+    # return html_nodes
         
 
 def markdown_to_html_node(markdown):
@@ -328,8 +342,7 @@ def markdown_to_html_node(markdown):
             child_nodes = build_list_node_children(block)
             html_nodes.append(ParentNode("ol", child_nodes))
         elif block_type == BlockType.BLOCKQUOTE:
-            child_nodes = build_block_quote_children(block)
-            html_nodes.append(ParentNode("blockquote", child_nodes))       
+            html_nodes.extend(build_block_quote_children(block))      
         elif block_type == BlockType.PARAGRAPH:
             child_nodes = build_paragraph_children(block)
             html_nodes.append(ParentNode("p", child_nodes))            
@@ -351,7 +364,29 @@ def copy_static_to_public(src_dir, dst_dir):
             shutil.copy(src_file_path, dst_dir)
         
             
-            
+def extract_title(markdown):
+    lines = markdown.split("\n")
+    for line in lines:
+        if line.startswith("# "):
+            return line[2:]
+        
+    raise Exception("no title found")
+
+def generate_page(from_path, template_path, to_path):
+    print(f"Generating page from {from_path} to {to_path} using {template_path}")
+    
+    with open(from_path, "r") as from_file:
+        markdown = from_file.read()
+        
+    html_node = markdown_to_html_node(markdown)
+    title = extract_title(markdown)
+    
+    with open(template_path, "r") as template_file:
+        template = template_file.read()
+        
+    page = template.replace("{{ Title }}", title).replace("{{ Content }}", html_node.to_html())
+    with open(to_path, "w") as to_file:
+        to_file.write(page)
 
 def main():
     work_dir = os.getcwd()
@@ -359,5 +394,7 @@ def main():
     dst_dir = os.path.join(work_dir, "public")
     shutil.rmtree(dst_dir, ignore_errors=True)
     copy_static_to_public(src_dir, dst_dir)
+    generate_page(os.path.join(work_dir, "content", "index.md"), os.path.join(work_dir, "template.html"), os.path.join(dst_dir, "index.html"))
 
-main()
+if __name__ == "__main__":
+    main()

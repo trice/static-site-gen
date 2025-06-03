@@ -1,5 +1,4 @@
 from functools import reduce
-import htmlnode
 from htmlnode import HTMLNode
 
 class ParentNode(HTMLNode):
@@ -18,8 +17,8 @@ class ParentNode(HTMLNode):
         elif not self.children:
             raise ValueError("children is a required parameter")
         else:
-            match(self.tag):
-                case "p" | "div" | "span" | "pre" | "ul" | "ol" | "blockquote":
+            match self.tag:
+                case "p" | "div" | "span" | "pre" | "ul" | "ol" | "blockquote" | "li":
                     return self.__tag_helper(self.tag, self.children)
             return None
 
