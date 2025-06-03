@@ -401,16 +401,7 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
                 from_path = os.path.join(dir_path_content, source_file)
                 to_path = os.path.join(dest_dir_path, source_file[:-3] + ".html")
                 generate_page(from_path, template_path, to_path)
-                
-    # for dir_path, dir_names, file_names in os.walk(dir_path_content):
-    #     for file_name in file_names:
-    #         if file_name.endswith(".md"):
-    #             from_path = os.path.join(dir_path, file_name)
-    #             sub_directories = dir_path.split(os.sep)
-    #             to_path = os.path.join(dest_dir_path, file_name[:-3] + ".html")
-    #             print(from_path)
-    #             print(to_path)
-    #             #generate_page(from_path, template_path, to_path)
+
 
 def main():
     work_dir = os.getcwd()
